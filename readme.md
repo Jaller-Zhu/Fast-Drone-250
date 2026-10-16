@@ -1,89 +1,79 @@
 <font size=6> **从零制作自主空中机器人** </font>
 
-本文档是视频教程[从零制作自主空中机器人](https://www.bilibili.com/video/BV1WZ4y167me?p=1)的配套文档,github链接为https://github.com/ZJU-FAST-Lab/Fast-Drone-250
+本文档是从视频教程[从零制作自主空中机器人](https://www.bilibili.com/video/BV1WZ4y167me?p=1)改编而来，用于适配实验室DIY的10寸机和5寸机。查看原教程[github仓库](https://github.com/ZJU-FAST-Lab/Fast-Drone-250)
 
 <font color="#dd0000">安全事项</font>
 
 四旋翼无人机具有较高的安全风险，请同学们严格遵守安全规范，不要在有人的室内或室外进行试验，对自己和他人的安全负责，本实验室完全免责。
 
 
-- [第一章：课程介绍](#第一章课程介绍)
-- [第二章：动力套焊接](#第二章动力套焊接)
-- [第三章：飞控的安装与接线](#第三章飞控的安装与接线)
-- [第四章：飞控设置与试飞](#第四章飞控设置与试飞)
-- [第五章：机载电脑与传感器的安装](#第五章机载电脑与传感器的安装)
-- [第六章：Ubuntu20.04的安装](#第六章ubuntu2004的安装)
-- [第七章：机载电脑的环境配置](#第七章机载电脑的环境配置)
-- [第八章：常用实验与调试软件的安装与使用](#第八章常用实验与调试软件的安装与使用)
-- [第九章：Ego-Planner代码框架与参数介绍](#第九章ego-planner代码框架与参数介绍)
-- [第十章：VINS的参数设置与外参标定](#第十章vins的参数设置与外参标定)
-- [第十一章：Ego-Planner的实验](#第十一章ego-planner的实验)
+- [第一章：动力套焊接](#第一章动力套焊接)
+- [第二章：机载电脑与相机的连接](#第二章机载电脑与相机的连接)
+- [第三章：飞控设置与试飞](#第三章飞控设置与试飞)
+- [第四章：Ubuntu20.04的安装](#第四章ubuntu2004的安装)
+- [第五章：机载电脑的环境配置](#第五章机载电脑的环境配置)
+- [第六章：常用实验与调试软件的安装与使用](#第六章常用实验与调试软件的安装与使用)
+- [第七章：Ego-Planner代码框架与参数介绍](#第七章ego-planner代码框架与参数介绍)
+- [第八章：VINS的参数设置与外参标定](#第八章vins的参数设置与外参标定)
+- [第九章：Ego-Planner的实验](#第九章ego-planner的实验)
 - [Q&A 常见问题及解答](#qa-常见问题及解答)
 
-## 第一章：课程介绍
-  本次课程是一套面向对自主空中机器人感兴趣的学生、爱好者、相关从业人员的免费课程，包含了从硬件组装、机载电脑环境设置、代码部署、实机实验等全套详细流程，带你从0开始，组装属于自己的自主无人机，并让它可以在未知的环境中自由避障穿行。本次课程所涉及的所有代码、硬件设计全部开源，<font color="#dd0000">严禁商用与转载，版权与最终解释权由浙江大学FASTLAB实验室所有。</font>
-  本次课程的重心主要落在自主空中机器人的搭建、代码部署及调试上，关于自主空中机器人的一些理论基础，例如动力学模型，路径搜索，轨迹规划，地图构建等内容，高飞老师在深蓝学院有非常详尽而深入浅出的[课程](https://www.shenlanxueyuan.com/course/385?source=1)，本次课程就不再赘述。
+## 第一章：动力套焊接
+  查看[笔记](https://app.notion.com/p/2-10-3d2b7664a095805aa339c0923253d95e?v=2f6b7664a0958013a6a6000c337cbfa1&source=copy_link)
+## 第二章：机载电脑与相机的连接
+* 相机通过 usb3.0 和IntelNUC 通信，也就是要使用支持 usb3.0的数据线
+* 飞控和机载电脑通过usb2ttl适配器通信：IntelNUC - FTDI 适配器 - Pixhawk（TELEM3）
+  * 使用转接线连接TELEM3口和适配器的针脚 \
+  ![接口说明](./Docs/telem2%20-%20ftdi.png)
+* Linux按插入顺序，为USB设备分配名字，为了防止出错，为 USB Serial Port 指定名字
+  * 查看设备ID `lsusb`，记录其中 pixhawk相关的口，如: Bus 003 Device 005: ID 26ac:0011
+  * 更改UDEV规则文件
+    ```
+    cd /etc/udev/rules.d/
+    sudo vim 98-pixhawk.rules
+    ```
+  * 为 pixhawk串口创建 sumlink `SUBSYSTEM=="tty", ATTRS{idVendor}=="26ac", ATTRS{idProduct}=="0011", SYMLINK+="ttyPixhawk"`
 
-## 第二章：动力套焊接
-  机器人本体相关配件及焊接用工具详见[purchase_list.xlsx](purchase_list.xlsx),对硬件选型有相关疑问请看 番外一：硬件选型
-## 第三章：飞控的安装与接线
-* 一定要注意电调信号线顺序！！！
-  <img src="images\电机方向.jpg" alt="电机方向" style="zoom: 15%;" />
-* 飞控箭头与机头同向为正向，任意方向旋转90°的倍数也可以，后续可以在飞控设置内调整，推荐和视频内相同朝向摆放。
-* <font color="#dd0000">强烈推荐使用硅胶杜邦线，常规杜邦线线材过硬，容易出现接触不良。</font>
-* 5V稳压模块注意贴黑胶带绝缘，周围注意贴一圈厚的海绵胶带来防止飞机降落时损坏5V模块，也可以考虑把5V模块用扎带扎在机臂旁边
-* 使用V5+飞控或其他把模拟和数字输出分开的飞控（特点是输出口标号为A1~A4 M1~M4），如果要用Dshot协议，请插在A口上
-
-## 第四章：飞控设置与试飞
-
-* 请烧录本git项目下的`/firmware/px4_fmu-v5_default.px4`固件，这个固件是官方1.11.0版本固件编译而来，如有需要可以自行编译。实测1.13版本固件存在BUG，不建议使用，更老的固件版本未经测试。
-
-* 在飞控的sd卡的根目录下创建`/etc/extras.txt`，写入
-
+  * 重新加载udev规则，查看是否成功
+    ```
+    sudo udevadm control --reload-rules
+    sudo udevadm trigger
+    ls -la /dev/ttyPixhawk
+    ```
+    成功时应该显示 `lrwxrwxrwx 1 root root 7 ... /dev/ttyPixhawk -> ttyUSB0`
+    
+* 检查飞控和IntelNUC是否连接成功
+  * 查看是否识别适配器 `ls /dev/ttyUSB*`，插上模块前后应该能看到有一个新的设备
+  * 查看数据读取 `ls -la /dev/ttyUSB0`，如果显示 `crw-rw---- root dialout`， 需要确认当前用户在 dialout 组 `groups $USER`，如果没有`dialout`，则需要手动授权 `sudo usermod -a -G dialout $USER`，然后重新登录，或者临时，`sudo chmod 666 /dev/ttyPixhawk`
+  * 确定串口有数据流入 `sudo cat /dev/ttyUSB0 | hexdump -C | head -30`，如果没有，
+  (10寸3号机的Pixhawk的TELEM2接口损坏，移到了TELEM3接口)
+  需要在QGC中设置 `MAV_1_CONFIG` 应该设置成 `TELEM3`，reboot pixhawk后查看SER_TEL3_BAUD，应该和MAVROS波特率一致（921600），`roscat mavros px4.launch` 查看MAVROS中fuc_url的波特率，如果设置之后依旧没有可以先尝试重启NUC
+  * 确认 MAVROS 启动参数
+    ```
+    roslaunch mavros px4.launch fcu_url:=/dev/ttyPixhawk:921600
+    rostopic echo /mavros/state
+    ``` 
+    正常应该看到：
+    ```
+    connected: True
+    armed: False
+    mode: "MANUAL"
+    ```
+## 第三章：飞控设置与试飞
+*记录介绍滤波和PIDs调节*
+* 在QGC -> Analyze Tools -> MAVLink Console 中修改IMU发布频率
   ```
-  mavlink stream -d /dev/ttyACM0 -s ATTITUDE_QUATERNION -r 200
-  mavlink stream -d /dev/ttyACM0 -s HIGHRES_IMU -r 200
+  nxh>ls && cd /fs/microsd && mkdir etc
+  nxh>echo "mavlink stream -d /dev/ttyS3 -s ATTITUDE_QUATERNION -r 200" > /fs/microsd/etc/extras.txt
+  nxh>echo "mavlink stream -d /dev/ttyS3 -s HIGHRES_IMU -r 200" >> /fs/microsd/etc/extras.txt
   ```
-  
-  以提高imu发布频率
-  
-* 修改机架类型为 `Generic 250 Racer`，代指250mm轴距机型。如果是其他尺寸的机架，请根据实际轴距选择机架类型
-
-* 修改`dshot_config`为dshot600
-
-* 修改`CBRK_SUPPLY_CHK`为894281 *执行这步跳过了电源检查，因此左侧栏的电池设置部分就算是红的也没关系*
-
-* 修改`CBRK_USB_CHK`为197848
-
-* 修改`CBRK_IO_SAFETY`为22027
-
-* 修改`SER_TEL1_BAUD`为921600
-
-* 修改`SYS_USE_IO`为0（搜索不到则不用管）
-
 * 上电前请先用万用表通断档检测电源正负焊点是否短接，强烈建议第一次上电前先接一个[短路保护器](https://item.taobao.com/item.htm?spm=a230r.1.14.6.72b83b20uNbZk7&id=656973651729&ns=1&abbucket=19#detail)
 
-* <font color="#dd0000">检测电机转向前确保没有安装螺旋桨！！！！</font>
+*TODOs*:
+* 滤波笔记
+* PIDs调节笔记
 
-* 修改电机转向：进入mavlink控制台
-
-  ```
-  dshot reverse -m 1
-  dshot save -m 1
-  ```
-
-  修改`1`为需要反向的电机序号
-  
-* <font color="#dd0000">第一次试飞请务必找有自稳模式下飞行经验的飞手协助，只飞过大疆无人机的飞手99%无法飞好！</font>
-
-* 身边没有有经验的飞手怎么办？详见Q&A
-
-## 第五章：机载电脑与传感器的安装
-
-* 碳板已经预留了拆壳NUC的安装空位。如果想拆壳安装NUC，需要额外购买USB网卡，或者拆下自带的网卡天线找地方固定住，并且由于碳纤维板导电，请务必用尼龙柱把NUC支起来，相关资料请自行查阅。
-* 机载电脑使用4S航模电池直接供电，正常情况下没有问题。但理论上最好接一个稳压模块，否则在无人机炸机/电池几乎耗尽时会出现机载电脑关机的情况。但由于符合NUC功率的稳压模块比较大，请同学们酌情选用。
-
-## 第六章：Ubuntu20.04的安装
+## 第四章：Ubuntu20.04的安装
 
 * 镜像站地址：`http://mirrors.aliyun.com/ubuntu-releases/20.04/` 下载 `ubuntu-20.04.4-desktop-amd64.iso`
 * 烧录软件UltraISO官网：`https://cn.ultraiso.net/`
@@ -92,8 +82,8 @@
   * 交换空间（逻辑分区）16000M（内存大小的两倍）
   * 挂载点`/`（主分区）剩余所有容量
   * <font color="#dd0000">笔记本上也需要安装ubuntu，推荐装20.04版本。虚拟机或双系统都可以，如果有长期学习打算推荐双系统</font>
-## 第七章：机载电脑的环境配置
 
+## 第五章：机载电脑的环境配置
 * ROS安装
   * `sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'`
   * `sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654`
@@ -120,10 +110,12 @@
   * `cd /opt/ros/noetic/lib/mavros`
   * `sudo ./install_geographiclib_datasets.sh`
 * 安装ceres与glog与ddyanmic-reconfigure
+  * `git clone git@github.com:HuangTH96/Fast-Drone-250.git`
+  * `cd Fast-Drone-250`
   * 解压`3rd_party.zip`压缩包
   * 进入glog文件夹打开终端
   * `./autogen.sh && ./configure && make && sudo make install`
-  * `sudo apt-get install liblapack-dev libsuitesparse-dev libcxsparse3.1.2 libgflags-dev libgoogle-glog-dev libgtest-dev`
+  * `sudo apt-get install liblapack-dev libsuitesparse-dev libcxsparse3 libgflags-dev libgoogle-glog-dev libgtest-dev`
   * 进入ceres文件夹打开终端
   * `mkdir build`
   * `cd build`
@@ -132,15 +124,13 @@
   * `sudo make install`
   * `sudo apt-get install ros-noetic-ddynamic-reconfigure`
 * 下载ego-planner源码并编译
-  * `git clone https://github.com/ZJU-FAST-Lab/Fast-Drone-250`
-  * `cd Fast-Drone-250`
+  * `cd ~/Fast-Drone-250`
   * `catkin_make`
-  * `source devel/setup.bash`
+  * `echo "source ~/Fast-Drone-250/devel/setup.bash" >> ~/.bashrc`
   * `roslaunch ego_planner single_run_in_sim.launch`
   * 在Rviz内按下键盘G键，再单击鼠标左键以点选无人机目标点
 
-## 第八章：常用实验与调试软件的安装与使用
-
+## 第六章：常用实验与调试软件的安装与使用
 * VScode：`sudo dpkg -i ***.deb`
 * Terminator：`sudo apt install terminator`
 * Plotjuggler：
@@ -154,11 +144,11 @@
   * `sudo apt install openssh-server`
   * 在笔记本上：`ping 192.168.**.**`
   * `sudo gedit /etc/hosts`
-  * 加上一行：`192.168.**.** fast-drone`
-  * `ping fast-drone`
-  * `ssh fast-drone@fast-drone`(`ssh 用户名@别名`)
+  * 加上一行：`192.168.**.** fast-drone-10-1` 其中，`fast-drone-10-1` 为别名，取名规则为：`fast-drone-<10寸>-<1号机>`
+  * `ping fast-drone-10-1`
+  * `ssh intel@fast-drone-10-1`(`ssh 机载电脑用户名@别名`)
 
-## 第九章：Ego-Planner代码框架与参数介绍
+## 第七章：Ego-Planner代码框架与参数介绍
 * `src/planner/plan_manage/launch/single_run_in_exp.launch`下的：
   * `map_size`：当你的地图大小较大时需要修改，注意目标点不要超过map_size/2
   * `fx/fy/cx/cy`：修改为你的深度相机的实际内参（下一课有讲怎么看）
@@ -169,7 +159,7 @@
   * `obstacles_inflation`：代表障碍物膨胀大小，单位为米。建议至少设置为飞机半径（包括螺旋桨、桨保）的1.5倍以上，但不要超过`resolution`的4倍。如果飞机轴距较大，请相应改大`resolution`
 * `src/realflight_modules/px4ctrl/config/ctrl_param_fpv.yaml`下的：
   * `mass`：修改为无人机的实际重量
-  * `hover_percent`：修改为无人机的悬停油门，可以通过px4log查看，具体可以参考[文档](https://www.bookstack.cn/read/px4-user-guide/zh-log-flight_review.md) 如果你的无人机是和课程的一模一样的话，这项保持为0.3即可。如果更改了动力配置，或重量发生变化，或轴距发生变化，都请调整此项，否则自动起飞时会发生无法起飞或者超调严重的情况。
+  * `hover_percent`：修改为无人机的悬停油门，可以通过px4log查看，具体可以参考[文档](https://www.bookstack.cn/read/px4-user-guide/zh-log-flight_review.md) 也就是PX4中的 `MPC_THR_HOVER`
   * `gain/Kp,Kv`：即PID中的PI项，一般不用太大改动。如果发生超调，请适当调小。如果无人机响应较慢，请适当调大。
   * `rc_reverse`：这项使用乐迪AT9S的不用管。如果在第十一课的自动起飞中，发现飞机的飞行方向与摇杆方向相反，说明需要修改此项，把相反的通道对应的值改为true。其中throttle如果反了，实际实验中会比较危险，建议在起飞前就确认好，步骤为：
     * `roslaunch mavros px4.launch`
@@ -179,43 +169,39 @@
     * 如果是由小变大，则不需要修改throttle的rc_reverse，反之改为true
     * 其他通道同理
   
-## 第十章：VINS的参数设置与外参标定
+## 第八章：VINS的参数设置与外参标定
 * 检查飞控mavros连接正常
-  * `ls /dev/tty*`，确认飞控的串口连接正常。一般是`/dev/ttyACM0`
-  * `sudo chmod 777 /dev/ttyACM0`，为串口附加权限
-  * `roslaunch mavros px4.launch`
+  * `ls /dev/ttyPixhawk`
+  * `sudo chmod 777 /dev/ttyPixhawk`，为串口附加权限
+  * `roslaunch mavors px4.launch fcu_url:=/dev/ttyPixhawk:921600`
   * `rostopic hz /mavros/imu/data_raw`，确认飞控传输的imu频率在200hz左右
 * 检查realsense驱动正常
-  * `roslaunch realsense2_camera rs_camera.launch`
+  * `roslaunch realsense2_camera rs_camera.launch enable_infra1:=true enable_infra2:=true`
   * 进入远程桌面，`rqt_image_view`
   * 查看`/camera/infra1/image_rect_raw`,`/camera/infra2/image_rect_raw`,`/camera/depth/image_rect_raw`话题正常
 * VINS参数设置
   * 进入`realflight_modules/VINS_Fusion/config/`
-  
-  * 驱动realsense后，`rostopic echo /camera/infra1/camera_info`，把其中的K矩阵中的fx,fy,cx,cy填入`left.yaml`和`right.yaml`
-  
-  * 在home目录创建`vins_output`文件夹(如果你的用户名不是fast-drone，需要修改config内的vins_out_path为你实际创建的文件夹的绝对路径)
-  
-  * 修改`fast-drone-250.yaml`的`body_T_cam0`和`body_T_cam1`的`data`矩阵的第四列为你的无人机上的相机相对于飞控的实际外参，单位为米，顺序为x/y/z，第四项是1，不用改
+  * 驱动realsense后，`rostopic echo /camera/infra1/camera_info`，`rostopic echo /camera/infra2/camera_info`，分别把其中的K矩阵中的fx,fy,cx,cy填入`/src/realflight_modules/VINS-Fusion/config/left.yaml`和`/src/realflight_modules/VINS-Fusion/config/right.yaml`
+  * 在home目录创建文件夹`mkdir ~/vins_output` (如果你的用户名不是intel，需要修改`/src/realflight_modules/VINS-Fusion/config/fast-drone-250.yaml`内的vins_out_path为你实际创建的文件夹的绝对路径)
+  * 修改`/src/realflight_modules/VINS-Fusion/config/fast-drone-250.yaml`的`body_T_cam0`和`body_T_cam1`的`data`矩阵的第四列为你的无人机上的相机相对于飞控的实际外参，单位为米，顺序为x/y/z，第四项是1，不用改
   
 * VINS外参精确自标定
   * `sh shfiles/rspx4.sh`
   * `rostopic echo /vins_fusion/imu_propagate`
   * 拿起飞机沿着场地<font color="#dd0000">尽量缓慢</font>地行走，场地内光照变化不要太大，灯光不要太暗，<font color="#dd0000">不要使用会频闪的光源</font>，尽量多放些杂物来增加VINS用于匹配的特征点
-  * 把`vins_output/extrinsic_parameter.txt`里的内容替换到`fast-drone-250.yaml`的`body_T_cam0`和`body_T_cam1`
+  * 把`vins_output/extrinsic_parameter.txt`里的内容替换到`/src/realflight_modules/VINS-Fusion/config/fast-drone-250.yaml`的`body_T_cam0`和`body_T_cam1`
   * 重复上述操作直到走几圈后VINS的里程计数据偏差收敛到满意值（一般在0.3米内）
 * 建图模块验证
   * `sh shfiles/rspx4.sh`
   * `roslaunch ego_planner single_run_in_exp.launch`
-  * 进入远程桌面 `roslaunch ego_planner rviz.launch`
+  * 进入远程桌面 `roslaunch ego_planner rviz.launch` 查看在rviz中是否正确构建栅格地图
 
-## 第十一章：Ego-Planner的实验
+## 第九章：Ego-Planner的实验
 * 自动起飞：
-
   * `sh shfiles/rspx4.sh`
   * `rostopic echo /vins_fusion/imu_propagate`
   * 拿起飞机进行缓慢的小范围晃动，放回原地后确认没有太大误差
-  * 遥控器5通道拨到内侧，六通道拨到下侧，油门打到中位
+  * 查看遥控器通道设置 `rostopic echo /mavros/rc/in` 分别拨动sw5和sw6，确认输出列表中的**第四位和第五位发生变化，并且上切时，数值最高**。将遥控器sw5通道拨到上档，六通道拨到下档，油门打到中位，进入 MANUAL_CTRL 状态。查看[笔记](https://app.notion.com/p/FastDrone250-px4ctrl-3de1cb83606780a29f7bf13789e62fe8?source=copy_link)，了解更多遥控器通道设置以及切换逻辑，并且在起飞之前，**务必检查模式切换是否正常**。
   * `roslaunch px4ctrl run_ctrl.launch`
   * `sh shfiles/takeoff.sh`，如果飞机螺旋桨开始旋转，但无法起飞，说明`hover_percent`参数过小；如果飞机有明显飞过1米高，再下降的样子，说明`hover_percent`参数过大
   * 遥控器此时可以以类似大疆飞机的操作逻辑对无人机进行位置控制
@@ -226,12 +212,15 @@
   * `sh shfiles/record.sh`
   * 进入远程桌面 `roslaunch ego_planner rviz.launch`
   * 按下G键加鼠标左键点选目标点使无人机飞行
-* <font color="#dd0000">如果实验中遇到意外怎么办！！！</font>
-  * `case 1`: VINS定位没有飘，但是规划不及时/建图不准确导致无人机规划出一条可能撞进障碍物的轨迹。如果飞手在飞机飞行过程中发现无人机可能会撞到障碍物，在撞上前把6通道拨回上侧，此时无人机会退出轨迹跟随模式，进入VINS悬停模式，在此时把无人机安全着陆即可
+* <font color="#dd0000">应急处理！！！</font>
+  * `case 1`: VINS定位没有飘，但是规划不及时/建图不准确导致无人机规划出一条可能撞进障碍物的轨迹。如果飞手在飞机飞行过程中发现无人机可能会撞到障碍物，在撞上前把6通道拨回下档，此时无人机会退出轨迹跟随模式，进入VINS悬停模式，在此时把无人机安全着陆即可
   * `case 2`：VINS定位飘了，表现为飞机大幅度颤抖/明显没有沿着正常轨迹走/快速上升/快速下降等等，此时拨6通道已经无济于事，必须把5通道拨回中位，使无人机完全退出程序控制，回到遥控器的stablized模式来操控降落
   * `case 3`：无人机已经撞到障碍物，并且还没掉到地上。此时先拨6通道，看看飞机能不能稳住，稳不住就拨5通道手动降落
   * `case 4`：无人机撞到障碍物并且炸到地上了：拨5通道立刻上锁，减少财产损失
   * `case 5`：**绝招** 反应不过来哪种case，或者飞机冲着非常危险的区域飞了，直接拨7通道紧急停桨。这样飞机会直接失去动力摔下来，对飞机机身破坏比较大，一般慢速情况下不建议。
+
+## Todo List
+* 10寸3号机飞行测试过程中，TELEM2接NUC的FTDI适配器的转接线GND（红色）线烧毁，导致FTDI适配器和TELEM2接口损坏，目前TELEM2没有办法传输数据，不知道如何测试TELEM2是否真的损害
 
 ## Q&A 常见问题及解答
 
