@@ -1,1 +1,7 @@
 glog/
+devel/
+*.bak
+build/
+devel/
+*.o
+*.bak
