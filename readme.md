@@ -1,6 +1,6 @@
 <font size=6> **从零制作自主空中机器人** </font>
 
-本文档是从视频教程[从零制作自主空中机器人](https://www.bilibili.com/video/BV1WZ4y167me?p=1)改编而来，用于适配实验室DIY的10寸机和5寸机。查看原教程[github仓库](https://github.com/ZJU-FAST-Lab/Fast-Drone-250)
+本文档是从视频教程[从零制作自主空中机器人](https://www.bilibili.com/video/BV1WZ4y167me?p=1)改编而来，用于适配实验室DIY的10寸3号机。查看原教程[github仓库](https://github.com/ZJU-FAST-Lab/Fast-Drone-250)
 
 <font color="#dd0000">安全事项</font>
 
